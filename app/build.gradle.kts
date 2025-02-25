@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
     kotlin("plugin.serialization") version "2.1.10"
 }
@@ -44,8 +45,8 @@ android {
 dependencies {
 
     implementation (libs.androidx.room.runtime)
-    implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.firebase.crashlytics.ktx)
     annotationProcessor (libs.androidx.room.compiler)
 
     // For Kotlin users
