@@ -40,6 +40,7 @@ fun NavigationDrawer(){
         Scaffold(
             topBar = { MyTopAppBar(scope, drawerState) },
             bottomBar = { MyBottomAppBar()},
+            floatingActionButton = {MyFloatingActionButton()},
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             MainScreen(innerPadding)
