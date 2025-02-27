@@ -9,9 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MyFloatingActionButton(){
+fun MyFloatingActionButton(openDialog: () -> Unit) {
     FloatingActionButton(
-        onClick = {},
+        onClick = openDialog,
         elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp)
     ) {
         Icon(Icons.Default.AddCircle, contentDescription = "Add Button")

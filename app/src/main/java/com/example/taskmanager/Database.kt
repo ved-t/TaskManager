@@ -18,7 +18,7 @@ import java.util.Date
 
 
 enum class Priority(val value: Int){
-    ONE(1), TWO(2), THREE(3)
+    LOW(1), MEDIUM(2), HIGH(3)
 }
 
 @Entity(tableName = "tasks")
@@ -48,17 +48,21 @@ interface TaskDao {
 @Database(entities = [Task::class], version = 1, exportSchema = true )
 abstract class TaskDatabase: RoomDatabase(){
     abstract fun taskDoa(): TaskDao
-    private var INSTANCE: TaskDatabase? = null
 
-    fun getDatabase(context: Context): TaskDatabase{
-        return INSTANCE ?: synchronized(this){
-            val instance = Room.databaseBuilder(
-                context.applicationContext,
-                TaskDatabase::class.java,
-                "task_database"
-            ).build()
-            INSTANCE = instance
-            instance
+    companion object{
+        @Volatile
+        private var INSTANCE: TaskDatabase? = null
+
+        fun getDatabase(context: Context): TaskDatabase{
+            return INSTANCE ?: synchronized(this){
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    TaskDatabase::class.java,
+                    "task_database"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
         }
     }
 }
