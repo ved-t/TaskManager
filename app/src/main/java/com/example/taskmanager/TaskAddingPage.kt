@@ -133,7 +133,7 @@ fun TaskAddingArea(onDismiss: () -> Unit, onAddTask: (Task) -> Unit){
         ) {
             TextField(
                 readOnly = true,
-                value = selectedOption.name,
+                value = selectedOption.name, 
                 onValueChange = {},
                 label = { Text("Priority")},
                 trailingIcon = {
@@ -187,7 +187,7 @@ fun TaskAddingArea(onDismiss: () -> Unit, onAddTask: (Task) -> Unit){
             }
             Button(onClick = onDismiss) {
                 Text("Close")
-            }
+            } 
         }
     }
 }
