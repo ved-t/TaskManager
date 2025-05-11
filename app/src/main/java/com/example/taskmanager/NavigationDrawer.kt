@@ -16,15 +16,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.example.taskmanager.domain.model.Task
+import com.example.taskmanager.presentation.ui.BottomSheet
+import com.example.taskmanager.presentation.ui.TaskAddingArea
+import com.example.taskmanager.presentation.ui.TaskScreen
+import com.example.taskmanager.presentation.ui.TaskUpdatingArea
 
 @Composable
 fun NavigationDrawer(){
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
     val context = LocalContext.current
-    val database: TaskDatabase = remember { TaskDatabase.getDatabase(context) }
-    val taskManager: TaskManager = remember { TaskManager(database.taskDoa()) }
 
 //    For Task Adding Pop-Up
     var showSheet by remember { mutableStateOf(false) }
@@ -43,27 +45,30 @@ fun NavigationDrawer(){
             floatingActionButton = {MyFloatingActionButton { showSheet = true } },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
-            TaskScreen(innerPadding, context, taskManager)
+            TaskScreen(innerPadding)
         }
     }
 
     if(showSheet){
-        OpenBottomSheet(showSheet, onDismiss =  {showSheet = false},"TaskAddingArea", taskManager)
+        OpenBottomSheet(onDismiss =  {showSheet = false},"TaskAddingArea")
     }
-
 }
 
 
 @Composable
-fun OpenBottomSheet(showSheet: Boolean, onDismiss: ()->Unit, sheetType: String, taskManager: TaskManager, task: Task? = null){
-    if(showSheet){
-        if(sheetType == "TaskAddingArea"){
-            FABWithBottomSheet(showSheet, onDismiss =  onDismiss
-            ) { TaskAddingArea(onDismiss = onDismiss, taskManager::addTask) }
+fun OpenBottomSheet(onDismiss: ()->Unit, sheetType: String, task: Task? = null ){
+    if(sheetType == "TaskAddingArea"){
+        BottomSheet(
+            onDismiss = onDismiss
+        ) {
+            TaskAddingArea(onDismiss = onDismiss)
         }
-        else if(sheetType == "TaskUpdatingArea"){
-            FABWithBottomSheet(showSheet, onDismiss =  onDismiss
-            ) { TaskUpdatingArea(onDismiss = onDismiss, taskManager::addTask, task) }
+    }
+    else if(sheetType == "TaskUpdatingArea"){
+        BottomSheet(
+            onDismiss = onDismiss
+        ) {
+            TaskUpdatingArea(onDismiss = onDismiss, task)
         }
     }
 }

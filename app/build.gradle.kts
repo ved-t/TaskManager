@@ -5,6 +5,8 @@ plugins {
     id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
     kotlin("plugin.serialization") version "2.1.10"
+    id("com.google.dagger.hilt.android")
+    id ("dagger.hilt.android.plugin")
 }
 
 android {
@@ -54,6 +56,14 @@ dependencies {
 
     // Optional: Support for RxJava and Coroutines
     implementation (libs.androidx.room.ktx)
+
+//    View Model
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+
+//    Hilt Support
+    implementation (libs.hilt.android)
+    ksp (libs.hilt.compiler)
+    implementation (libs.androidx.hilt.navigation.compose)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
