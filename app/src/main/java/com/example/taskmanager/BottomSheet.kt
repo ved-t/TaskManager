@@ -1,4 +1,4 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet

@@ -1,7 +1,6 @@
 package com.example.taskmanager.presentation.ui
 
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -30,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,23 +48,25 @@ import com.example.taskmanager.data.local.Repeat
 import com.example.taskmanager.domain.model.Task
 import com.example.taskmanager.presentation.viewmodel.TaskViewModel
 import com.example.taskmanager.TimePickerModal
+import com.example.taskmanager.domain.model.TaskList
 import java.time.LocalTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskUpdatingArea(
+fun TaskAddDetailArea(
+    taskTitle: String,
+    taskDescription: String,
+    taskPriority: Priority,
     onDismiss: () -> Unit,
-    task: Task?,
+    onDismissHalfDialogBox: () -> Unit,
     viewModel: TaskViewModel = hiltViewModel()
 ){
-    var title by remember { mutableStateOf(task!!.title) }
-    var description by remember { mutableStateOf(task!!.description) }
+    var title by remember { mutableStateOf(taskTitle) }
+    var description by remember { mutableStateOf(taskDescription) }
 
-    val isTitleEmpty = remember{ mutableStateOf(true) }
-    val isDescriptionEmpty = remember{ mutableStateOf(true) }
-
-    var isRepeating by remember { mutableStateOf(task!!.isRepeating) }
+    val isTitleEmpty = remember{ mutableStateOf(title.isEmpty()) }
+    val isDescriptionEmpty = remember{ mutableStateOf(description.isEmpty()) }
 
     var textFieldColors by remember {
         mutableStateOf(Color.White)
@@ -76,14 +76,13 @@ fun TaskUpdatingArea(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
 //        Header Text
         Text(
-            text = "Update existing task",
+            text = "Add new task",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
@@ -110,7 +109,7 @@ fun TaskUpdatingArea(
 
         Spacer(modifier = Modifier.height(16.dp ))
 
-//        Descroption TextField
+//        Description TextField
         TextField(
             value = description,
             onValueChange = {
@@ -131,7 +130,7 @@ fun TaskUpdatingArea(
 
 //        Priority TextField
         var expanded by remember { mutableStateOf(false ) }
-        var selectedOption by remember { mutableStateOf(task!!.priority) }
+        var selectedOption by remember { mutableStateOf(taskPriority) }
 
         Row(
             modifier = Modifier
@@ -176,11 +175,6 @@ fun TaskUpdatingArea(
         Spacer(modifier = Modifier.height(16.dp ))
 
 //        Date Picker & Date Display OutlinedTextField
-        LaunchedEffect(Unit) {
-            viewModel.getDateFromTask(task!!)
-            viewModel.getTimeFromTask(task)
-        }
-
         var date: Long? = viewModel.dateMillis
         var time: Int? = viewModel.startTime
 
@@ -260,7 +254,7 @@ fun TaskUpdatingArea(
         Spacer(modifier = Modifier.height(16.dp))
 
         var repeatExpanded by remember { mutableStateOf(false) }
-        var selectedRepeatFrequency by remember { mutableStateOf(task!!.repeat) }
+        var selectedRepeatFrequency by remember { mutableStateOf(Repeat.None) }
         var openCustomRepeatPage by remember { mutableStateOf(false) }
 
         ExposedDropdownMenuBox(
@@ -303,6 +297,7 @@ fun TaskUpdatingArea(
                                     openCustomRepeatPage = true
                                 }
                             }
+
                             repeatExpanded = false
                         }
                     )
@@ -318,11 +313,12 @@ fun TaskUpdatingArea(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var selectedTaskListId by remember { mutableStateOf<Int?> (task?.taskListId) }
+        var selectedTaskListId by remember { mutableStateOf<Int?> (null) }
         var selectedTaskListName by remember { mutableStateOf<String> ("Select Task List") }
         var taskListExpanded by remember { mutableStateOf(false) }
 
         val allTaskList by viewModel.allTasksList.collectAsState()
+
 
         ExposedDropdownMenuBox(
             expanded = taskListExpanded,
@@ -370,30 +366,40 @@ fun TaskUpdatingArea(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = {
-                if(title.isNotEmpty() && description.isNotEmpty()){
+                if(!isTitleEmpty.value && !isDescriptionEmpty.value){
                     title = viewModel.cleanString(title)
                     description = viewModel.cleanString(description)
 
-                    isRepeating = selectedRepeatFrequency != Repeat.None
                     val taskListId = selectedTaskListId
+                    val isRepeating = selectedRepeatFrequency != Repeat.None
 
-                    val updatedTask = date?.let { time?.let { it1 -> task?.copy(title = title, description = description, priority = selectedOption, dueDate = it, dueTime = it1, repeat = selectedRepeatFrequency, isRepeating = isRepeating, taskListId = taskListId) } }
+                    val task: Task = Task(
+                        title = title,
+                        description = description,
+                        priority = selectedOption,
+                        dueDate = date!!,
+                        dueTime = time!!,
+                        repeat = selectedRepeatFrequency,
+                        isRepeating = isRepeating,
+                        taskListId = taskListId
+                    )
 
-                    Log.d("UpdateTask", updatedTask.toString())
-                    if (updatedTask != null) {
-                        viewModel.updateTask(updatedTask)
-                    }
+                    viewModel.addTask(task)
                     onDismiss()
-                    Toast.makeText(context, "Task Updated Successfully", Toast.LENGTH_LONG).show()
+                    onDismissHalfDialogBox()
+                    Toast.makeText(context, "Task Added Successfully", Toast.LENGTH_LONG).show()
                 }
                 else{
                     textFieldColors = Color.Red
                     Toast.makeText(context, "Please enter valid Title", Toast.LENGTH_LONG).show()
                 }
             }) {
-                Text("Update")
+                Text("Add")
             }
-            Button(onClick = onDismiss) {
+            Button(onClick = {
+                onDismiss()
+                onDismissHalfDialogBox()
+            }) {
                 Text("Close")
             }
         }

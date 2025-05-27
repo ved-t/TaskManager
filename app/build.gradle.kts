@@ -65,6 +65,9 @@ dependencies {
     ksp (libs.hilt.compiler)
     implementation (libs.androidx.hilt.navigation.compose)
 
+//    Extended Icon Support
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

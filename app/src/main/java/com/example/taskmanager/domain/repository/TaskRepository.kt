@@ -1,6 +1,8 @@
 package com.example.taskmanager.domain.repository
 
 import com.example.taskmanager.domain.model.Task
+import com.example.taskmanager.domain.model.TaskList
+import com.example.taskmanager.domain.model.TaskListWithTasks
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository{
@@ -10,5 +12,17 @@ interface TaskRepository{
 
     suspend fun deleteTask(task: Task)
 
-    fun getAllTasks(): Flow<List<Task>>
+    fun getAllCompleteTasks(): Flow<List<Task>>
+
+    fun getAllIncompleteTasks(): Flow<List<Task>>
+
+    suspend fun insertTaskList(taskList: TaskList)
+
+    suspend fun updateTaskList(taskList: TaskList)
+
+    suspend fun deleteTaskList(taskList: TaskList)
+
+    fun getAllTaskList(): Flow<List<TaskList>>
+
+    fun getAllTasksAndTaskList(): Flow<List<TaskListWithTasks>>
 }

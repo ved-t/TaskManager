@@ -1,32 +1,57 @@
 package com.example.taskmanager.di
 
 import android.content.Context
-import androidx.room.Insert
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.taskmanager.core.util.LocalDateConverter
+import com.example.taskmanager.core.util.LocalTimeConverter
+import com.example.taskmanager.core.util.TrimWhiteSpaces
 import com.example.taskmanager.data.local.TaskDao
 import com.example.taskmanager.data.local.TaskDatabase
-import com.example.taskmanager.data.local.TaskDatabase_Impl
+import com.example.taskmanager.data.local.TaskDatabaseCallback
+import com.example.taskmanager.data.local.TaskListEntity
 import com.example.taskmanager.data.repository.TaskRepositoryImpl
-import com.example.taskmanager.domain.model.Task
 import com.example.taskmanager.domain.repository.TaskRepository
-import com.example.taskmanager.domain.usecase.DeleteTaskUseCase
-import com.example.taskmanager.domain.usecase.GetTaskUseCase
-import com.example.taskmanager.domain.usecase.InsertTaskUseCase
-import com.example.taskmanager.domain.usecase.UpdateTaskUseCase
+import com.example.taskmanager.domain.usecase.CalculateNextDueDateUseCase
+import com.example.taskmanager.domain.usecase.CompleteTaskUseCase
+import com.example.taskmanager.domain.usecase.FilterIncompleteCompleteTasksUseCase
+import com.example.taskmanager.domain.usecase.TaskListWithTaskUseCase
+import com.example.taskmanager.domain.usecase.database.DeleteTaskUseCase
+import com.example.taskmanager.domain.usecase.database.GetIncompleteTaskUseCase
+import com.example.taskmanager.domain.usecase.database.InsertTaskUseCase
+import com.example.taskmanager.domain.usecase.converters.LocalDateToMillisUseCase
+import com.example.taskmanager.domain.usecase.converters.LocalTimeToMinutesUseCase
+import com.example.taskmanager.domain.usecase.converters.MillisToLocalDateUseCase
+import com.example.taskmanager.domain.usecase.converters.MinutesToLocalTimeUseCase
+import com.example.taskmanager.domain.usecase.database.DeleteTaskListUseCase
+import com.example.taskmanager.domain.usecase.database.GetCompleteTaskUseCase
+import com.example.taskmanager.domain.usecase.database.GetTaskListAndTasksUseCase
+import com.example.taskmanager.domain.usecase.database.GetTaskListUseCase
+import com.example.taskmanager.domain.usecase.database.InsertTaskListUseCase
+import com.example.taskmanager.domain.usecase.database.UpdateTaskListUseCase
+import com.example.taskmanager.domain.usecase.utils.TrimWhiteSpacesUseCase
+import com.example.taskmanager.domain.usecase.database.UpdateTaskUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import jakarta.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule{
 
     @Provides
-    fun provideGetTaskUseCase(repository: TaskRepository): GetTaskUseCase = GetTaskUseCase(repository)
+    fun provideGetIncompleteTaskUseCase(repository: TaskRepository): GetIncompleteTaskUseCase = GetIncompleteTaskUseCase(repository)
+
+    @Provides
+    fun provideGetCompleteTaskUseCase(repository: TaskRepository): GetCompleteTaskUseCase = GetCompleteTaskUseCase(repository)
 
     @Provides
     fun provideInsertTaskUseCase(repository: TaskRepository): InsertTaskUseCase = InsertTaskUseCase(repository)
@@ -38,8 +63,71 @@ object AppModule{
     fun provideDeleteTaskUseCase(repository: TaskRepository): DeleteTaskUseCase = DeleteTaskUseCase(repository)
 
     @Provides
+    fun provideGetTaskListUseCase(taskRepository: TaskRepository): GetTaskListUseCase = GetTaskListUseCase(taskRepository)
+
+    @Provides
+    fun provideInsertTaskListUseCase(taskRepository: TaskRepository): InsertTaskListUseCase = InsertTaskListUseCase(taskRepository)
+
+    @Provides
+    fun provideUpdateTaskListUseCase(taskRepository: TaskRepository): UpdateTaskListUseCase = UpdateTaskListUseCase(taskRepository)
+
+    @Provides
+    fun provideDeleteTaskListUseCase(taskRepository: TaskRepository): DeleteTaskListUseCase = DeleteTaskListUseCase(taskRepository)
+
+    @Provides
+    fun provideGetTaskListAndTasks(taskRepository: TaskRepository): GetTaskListAndTasksUseCase = GetTaskListAndTasksUseCase(taskRepository)
+
+
+    @Provides
+    fun provideTrimWhiteSpaceUseCase(trimWhiteSpaces: TrimWhiteSpaces): TrimWhiteSpacesUseCase = TrimWhiteSpacesUseCase(trimWhiteSpaces)
+
+    @Provides
+    fun provideTrimWhiteSpaces(): TrimWhiteSpaces = TrimWhiteSpaces()
+
+    @Provides
+    fun provideLocalDateToMillisUseCase(localDateConverter: LocalDateConverter): LocalDateToMillisUseCase = LocalDateToMillisUseCase(localDateConverter)
+
+    @Provides
+    fun provideMillisToLocalDateUseCase(localDateConverter: LocalDateConverter): MillisToLocalDateUseCase = MillisToLocalDateUseCase(localDateConverter)
+
+    @Provides
+    fun provideLocalDateConverter(): LocalDateConverter = LocalDateConverter()
+
+    @Provides
+    fun provideLocalTimeToMinutesUseCase(localTimeConverter: LocalTimeConverter): LocalTimeToMinutesUseCase = LocalTimeToMinutesUseCase(localTimeConverter)
+
+    @Provides
+    fun provideMinutesToLocalTimeUseCase(localTimeConverter: LocalTimeConverter): MinutesToLocalTimeUseCase = MinutesToLocalTimeUseCase((localTimeConverter))
+
+    @Provides
+    fun provideLocalTimeConverter(): LocalTimeConverter = LocalTimeConverter()
+
+    @Provides
+    fun provideCalculateNextDueDateUseCase(): CalculateNextDueDateUseCase = CalculateNextDueDateUseCase()
+
+    @Provides
+    fun provideTaskListWithTaskUseCase(): TaskListWithTaskUseCase = TaskListWithTaskUseCase()
+
+    @Provides
+    fun provideFilterIncompleteCompleteTaskUseCase(): FilterIncompleteCompleteTasksUseCase = FilterIncompleteCompleteTasksUseCase()
+
+    @Provides
+    fun provideCompleteTaskUseCase(
+        calculateNextDueDateUseCase: CalculateNextDueDateUseCase,
+        localDateToMillisUseCase: LocalDateToMillisUseCase,
+        longToLocalDateUseCase: MillisToLocalDateUseCase
+    ): CompleteTaskUseCase {
+        return CompleteTaskUseCase(
+            calculateNextDueDateUseCase,
+            localDateToMillisUseCase,
+            longToLocalDateUseCase)
+    }
+
+    @Provides
     fun provideTaskRepository(dao: TaskDao): TaskRepository = TaskRepositoryImpl(dao)
 
+    @Provides
+    fun provideTaskDatabaseCallback(taskDao: TaskDao): TaskDatabaseCallback = TaskDatabaseCallback(taskDao)
 
     @Provides
     fun provideTaskDao(database: TaskDatabase): TaskDao {
@@ -52,6 +140,9 @@ object AppModule{
             context.applicationContext,
             TaskDatabase::class.java,
             "task_database"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 }
+
