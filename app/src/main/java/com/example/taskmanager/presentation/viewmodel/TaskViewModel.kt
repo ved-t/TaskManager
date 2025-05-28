@@ -1,19 +1,14 @@
 package com.example.taskmanager.presentation.viewmodel
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskmanager.domain.model.Task
 import com.example.taskmanager.domain.model.TaskList
 import com.example.taskmanager.domain.model.TaskListWithTasks
 import com.example.taskmanager.domain.usecase.CompleteTaskUseCase
+import com.example.taskmanager.domain.usecase.FilterCompleteTaskUseCase
 import com.example.taskmanager.domain.usecase.TaskListWithTaskUseCase
 import com.example.taskmanager.domain.usecase.database.DeleteTaskUseCase
 import com.example.taskmanager.domain.usecase.database.GetIncompleteTaskUseCase
@@ -30,16 +25,12 @@ import com.example.taskmanager.domain.usecase.database.InsertTaskListUseCase
 import com.example.taskmanager.domain.usecase.database.UpdateTaskListUseCase
 import com.example.taskmanager.domain.usecase.utils.TrimWhiteSpacesUseCase
 import com.example.taskmanager.domain.usecase.database.UpdateTaskUseCase
-import com.example.taskmanager.domain.usecase.FilterIncompleteCompleteTasksUseCase
+import com.example.taskmanager.domain.usecase.FilterIncomepleteTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -68,7 +59,8 @@ class TaskViewModel @Inject constructor(
     private val localTimeToMinutesUseCase: LocalTimeToMinutesUseCase,
     private val completeTaskUseCase: CompleteTaskUseCase,
     private val taskListWithTaskUseCase: TaskListWithTaskUseCase,
-    private val filterIncompleteCompleteTasksUseCase: FilterIncompleteCompleteTasksUseCase
+    private val filterIncomepleteTaskUseCase: FilterIncomepleteTaskUseCase,
+    private val filterCompleteTaskUseCase: FilterCompleteTaskUseCase,
 ): ViewModel(){
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -167,6 +159,32 @@ class TaskViewModel @Inject constructor(
     private val _taskList = MutableStateFlow<TaskList?>(null)
     val taskList: StateFlow<TaskList?> = _taskList
 
+    val incompleteTasks: StateFlow<List<Task>> = combine (
+        _allIncompleteTasks,
+        _taskList
+    ){incompleteList, list ->
+        val listId = list?.id
+        if(listId == null) incompleteList
+        else incompleteList.filter { it.taskListId == listId}
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(),
+        emptyList<Task>()
+    )
+
+    val completeTasks: StateFlow<List<Task>> = combine (
+        _allCompleteTasks,
+        _taskList
+    ){incompleteList, list ->
+        val listId = list?.id
+        if(listId == null) incompleteList
+        else incompleteList.filter { it.taskListId == listId}
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(),
+        emptyList<Task>()
+    )
+
     init {
         loadAll()
     }
@@ -233,17 +251,6 @@ class TaskViewModel @Inject constructor(
     fun updateTasksWithTaskList(taskList: TaskList){
         _taskList.value = taskList
     }
-
-    /*private val _inCompleteTasks = MutableStateFlow<List<Task>>(emptyList())
-    val inCompleteTasks: StateFlow<List<Task>> = _inCompleteTasks
-
-    private val _completeTasks = MutableStateFlow<List<Task>>(emptyList())
-    val completeTasks: StateFlow<List<Task>> = _completeTasks
-    private fun filterIncompleteAndCompleteTasks(tasks: List<Task>){
-        val (inCompleteTasks, completeTasks) = filterIncompleteCompleteTasksUseCase(tasks)
-        _inCompleteTasks.value = inCompleteTasks
-        _completeTasks.value = completeTasks
-    }*/
 
     fun addTask(task: Task){
         viewModelScope.launch {

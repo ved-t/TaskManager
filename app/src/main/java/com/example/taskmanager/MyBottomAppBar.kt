@@ -22,7 +22,7 @@ fun MyBottomAppBar(){
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
             selected = false,
-            onClick = {},
+            onClick = { },
         )
     }
 }

@@ -37,23 +37,13 @@ fun NavigationDrawer(){
 //    For Task Adding Pop-Up
     var showHalfDialog by remember { mutableStateOf(false) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-//                Add Composable later
-                Text("My App", style = MaterialTheme.typography.bodyMedium)
-            }
-        },
-    ) {
-        Scaffold(
-            topBar = { MyTopAppBar(scope, drawerState) },
-            bottomBar = { MyBottomAppBar()},
-            floatingActionButton = {MyFloatingActionButton { showHalfDialog = true } },
-            modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
-            TaskListHeader(innerPadding)
-        }
+    Scaffold(
+        topBar = { MyTopAppBar(scope, drawerState) },
+        bottomBar = { MyBottomAppBar()},
+        floatingActionButton = {MyFloatingActionButton { showHalfDialog = true } },
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        TaskListHeader(innerPadding)
     }
 
     if(showHalfDialog){

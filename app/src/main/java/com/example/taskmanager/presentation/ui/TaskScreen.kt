@@ -131,6 +131,7 @@ fun TaskListHeader(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TaskListItem(taskList: TaskList, viewModel: TaskViewModel = hiltViewModel()) {
@@ -160,8 +161,13 @@ private fun TaskListItem(taskList: TaskList, viewModel: TaskViewModel = hiltView
 @Composable
 fun TaskScreen(viewModel: TaskViewModel = hiltViewModel() ){
 
-    val allIncompleteTasks by viewModel.allIncompleteTasks.collectAsState()
-    val allCompleteTasks by viewModel.allCompleteTasks.collectAsState()
+//    val allIncompleteTasks by viewModel.allIncompleteTasks.collectAsState()
+//    val allCompleteTasks by viewModel.allCompleteTasks.collectAsState()
+
+    val allIncompleteTasks by viewModel.incompleteTasks.collectAsState()
+    val allCompleteTasks by viewModel.completeTasks.collectAsState()
+
+//    Log.d("NewTasks", allCompleteTasks2.toString() + allIncompleteTasks2.toString())
 
     val incompleteTasksSize = allIncompleteTasks.size
     val completeTasksSize = allCompleteTasks.size

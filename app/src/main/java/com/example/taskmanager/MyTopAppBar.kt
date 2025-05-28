@@ -18,12 +18,5 @@ import kotlinx.coroutines.launch
 fun MyTopAppBar(coroutineScope: CoroutineScope, drawerState: DrawerState){
     TopAppBar(
         title = { Text(text = "Task Manager")},
-        navigationIcon ={
-            IconButton(onClick = {coroutineScope.launch {
-                drawerState.open()
-            }}) {
-                Icon(Icons.Default.Menu, contentDescription = "Menu")
-            }
-        }
     )
 }
