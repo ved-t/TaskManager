@@ -1,4 +1,4 @@
-package com.example.taskmanager.presentation.viewmodel
+package com.example.taskmanager.presentation.viewmodel.task
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -283,6 +283,7 @@ class TaskViewModel @Inject constructor(
     fun updateTaskList(taskList: TaskList){
         viewModelScope.launch {
             updateTaskListUseCase(taskList)
+            _taskList.value = taskList
             loadAll()
         }
     }
@@ -290,6 +291,7 @@ class TaskViewModel @Inject constructor(
     fun deleteTaskList(taskList: TaskList){
         viewModelScope.launch {
             deleteTaskListUseCase(taskList)
+            _taskList.value = null
             loadAll()
         }
     }

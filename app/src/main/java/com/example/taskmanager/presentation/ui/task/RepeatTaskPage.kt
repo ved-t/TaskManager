@@ -1,7 +1,5 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager.presentation.ui.task
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskmanager.data.local.Repeat
+import com.example.taskmanager.presentation.ui.common.FullScreenDialogBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

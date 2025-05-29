@@ -1,6 +1,8 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager.presentation.ui.tasklist
 
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,15 +28,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.taskmanager.domain.model.TaskList
-import com.example.taskmanager.presentation.viewmodel.TaskViewModel
+import com.example.taskmanager.presentation.ui.common.HalfDialogBox
+import com.example.taskmanager.presentation.viewmodel.task.TaskViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TaskListAddDialogBox(
+fun TaskListDialogBox(
+    taskList: TaskList? = null,
     onDismiss: () -> Unit,
     viewModel: TaskViewModel = hiltViewModel()
 ){
-    var listName by remember { mutableStateOf("") }
-    var isListNameEmpty by remember { mutableStateOf(false) }
+    var listName by remember { mutableStateOf(taskList?.listName ?: "") }
+    var isListNameEmpty by remember { mutableStateOf(listName.isEmpty()) }
 
     var textFieldColors by remember {
         mutableStateOf(Color.White)
@@ -52,7 +57,7 @@ fun TaskListAddDialogBox(
                 .padding(16.dp)
         ){
             Text(
-                text = "Add new Task List",
+                text = if(taskList == null) "Add new Task List" else "Update list name",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -88,11 +93,17 @@ fun TaskListAddDialogBox(
                     if(!isListNameEmpty){
                         listName = viewModel.cleanString(listName)
 
-                        val taskList: TaskList = TaskList(
-                            listName = listName,
-                        )
+                        if(taskList == null){
+                            val newTaskList: TaskList = TaskList(
+                                listName = listName,
+                            )
+                            viewModel.addTaskList(newTaskList)
+                        }
+                        else{
+                            val newTaskList = taskList.copy(listName = listName)
+                            viewModel.updateTaskList(newTaskList)
+                        }
 
-                        viewModel.addTaskList(taskList)
                         onDismiss()
                         Toast.makeText(context, "New Task List Added Successfully", Toast.LENGTH_SHORT).show()
                     }
@@ -101,7 +112,11 @@ fun TaskListAddDialogBox(
                         Toast.makeText(context, "Please enter valid Title", Toast.LENGTH_SHORT).show()
                     }
                 }) {
-                    Text("Add")
+                    if(taskList == null){
+                        Text("Add")
+                    }
+                    else
+                        Text("Update")
                 }
                 Button(onClick = onDismiss) {
                     Text("Close")

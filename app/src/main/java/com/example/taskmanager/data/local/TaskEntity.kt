@@ -22,7 +22,8 @@ enum class Repeat(val value: Int?){
 @Entity(tableName = "tasks", foreignKeys = [ForeignKey(
     entity = TaskListEntity::class,
     parentColumns = ["id"],
-    childColumns = ["taskListId"]
+    childColumns = ["taskListId"],
+    onDelete = ForeignKey.CASCADE
 )],
     indices = [Index("taskListId")]
 )

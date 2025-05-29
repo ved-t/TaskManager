@@ -1,35 +1,24 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager.presentation.ui.task
 
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.twotone.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,36 +32,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.taskmanager.core.util.TrimWhiteSpaces
 import com.example.taskmanager.data.local.Priority
 import com.example.taskmanager.domain.model.Task
-import com.example.taskmanager.presentation.viewmodel.TaskViewModel
+import com.example.taskmanager.presentation.viewmodel.task.TaskViewModel
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskAddingArea(onDismiss: () -> Unit, viewModel: TaskViewModel = hiltViewModel()){
+fun TaskDetailPage(
+    onDismiss: () -> Unit,
+    task: Task? = null,
+    header: String,
+    viewModel: TaskViewModel = hiltViewModel()
+){
+    var title by remember { mutableStateOf(task!!.title) }
+    var description by remember { mutableStateOf(task!!.description) }
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-
-    val isTitleEmpty = remember{ mutableStateOf(true)}
-    val isDescriptionEmpty = remember{ mutableStateOf(true)}
+    val isTitleEmpty = remember{ mutableStateOf(true) }
+    val isDescriptionEmpty = remember{ mutableStateOf(true) }
 
     var textFieldColors by remember {
         mutableStateOf(Color.White)
     }
 
+    val scrollState = rememberScrollState()
     val context = LocalContext.current
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(16.dp)
     ) {
         Text(
-            text = "Add new task",
+            text = header,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
@@ -85,7 +77,6 @@ fun TaskAddingArea(onDismiss: () -> Unit, viewModel: TaskViewModel = hiltViewMod
                 title = it
                 isTitleEmpty.value = it.isEmpty()
             },
-            singleLine = true,
             label = { Text("Title") },
             placeholder = { Text("Enter title") },
             colors = TextFieldDefaults.colors(
@@ -97,7 +88,7 @@ fun TaskAddingArea(onDismiss: () -> Unit, viewModel: TaskViewModel = hiltViewMod
                 .height(56.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp ))
+        Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
             value = description,
@@ -118,17 +109,17 @@ fun TaskAddingArea(onDismiss: () -> Unit, viewModel: TaskViewModel = hiltViewMod
         Spacer(modifier = Modifier.height(16.dp ))
 
         var expanded by remember { mutableStateOf(false ) }
-        var selectedOption by remember { mutableStateOf(Priority.MEDIUM) }
-
-        var openTaskDetailPage by remember { mutableStateOf(false) }
+        var selectedOption by remember { mutableStateOf(task!!.priority) }
 
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+            ,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ){
             ExposedDropdownMenuBox(
+
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded },
             ) {
@@ -136,7 +127,7 @@ fun TaskAddingArea(onDismiss: () -> Unit, viewModel: TaskViewModel = hiltViewMod
                     readOnly = true,
                     value = selectedOption.name,
                     onValueChange = {},
-                    label = { Text("Priority")},
+                    label = { Text("Priority") },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     },
@@ -160,67 +151,38 @@ fun TaskAddingArea(onDismiss: () -> Unit, viewModel: TaskViewModel = hiltViewMod
                 }
             }
 
-            Icon(
-                Icons.TwoTone.Menu ,
-                contentDescription = "More",
-                modifier = Modifier
-                    .padding(10.dp)
-                    .background(Color.DarkGray)
-                    .clickable {
-                        openTaskDetailPage = true
-                        Toast.makeText(context, "Add more information", Toast.LENGTH_LONG).show()
-                    }
-            )
+
         }
 
-        if(openTaskDetailPage){
-            FullScreenDialogBox(
-                onDismiss
-            ) {
-                TaskAddDetailArea(
-                    taskTitle = title,
-                    taskDescription = description,
-                    taskPriority = selectedOption,
-                    onDismiss = {
-                        openTaskDetailPage = false
-                    },
-                    onDismissHalfDialogBox = onDismiss
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp ))
+        Spacer(modifier = Modifier.weight(1f))
 
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = {
-                if(!isTitleEmpty.value && !isDescriptionEmpty.value){
+                if(title.isNotEmpty() && description.isNotEmpty()){
                     title = viewModel.cleanString(title)
                     description = viewModel.cleanString(description)
 
-                    val task: Task = Task(
-                        title = title,
-                        description = description,
-                        priority = selectedOption,
-                    )
+                    val updatedTask = task?.copy(title = title, description = description, priority = selectedOption)
 
-                    viewModel.addTask(task)
+                    if (updatedTask != null) {
+                        viewModel.updateTask(updatedTask)
+                    }
                     onDismiss()
-                    Toast.makeText(context, "Task Added Successfully", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Task Updated Successfully", Toast.LENGTH_LONG).show()
                 }
                 else{
                     textFieldColors = Color.Red
                     Toast.makeText(context, "Please enter valid Title", Toast.LENGTH_LONG).show()
                 }
             }) {
-                Text("Add")
+                Text("Update")
             }
             Button(onClick = onDismiss) {
                 Text("Close")
-            } 
+            }
         }
     }
 }
-

@@ -4,11 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,13 +15,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.taskmanager.domain.model.Task
-import com.example.taskmanager.presentation.ui.FullScreenDialogBox
-import com.example.taskmanager.presentation.ui.HalfDialogBox
-import com.example.taskmanager.presentation.ui.TaskAddingArea
-import com.example.taskmanager.presentation.ui.TaskDetailPage
-import com.example.taskmanager.presentation.ui.TaskListHeader
-import com.example.taskmanager.presentation.ui.TaskScreen
-import com.example.taskmanager.presentation.ui.TaskUpdatingArea
+import com.example.taskmanager.presentation.ui.common.FullScreenDialogBox
+import com.example.taskmanager.presentation.ui.common.HalfDialogBox
+import com.example.taskmanager.presentation.ui.task.TaskAddingArea
+import com.example.taskmanager.presentation.ui.tasklist.TaskListHeader
+import com.example.taskmanager.presentation.ui.task.TaskUpdatingArea
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

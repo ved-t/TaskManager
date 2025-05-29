@@ -1,4 +1,4 @@
-package com.example.taskmanager.presentation.state
+package com.example.taskmanager.presentation.state.task
 
 import com.example.taskmanager.domain.model.Task
 

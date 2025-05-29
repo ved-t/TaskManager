@@ -1,6 +1,7 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager.presentation.ui.task
 
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,27 +48,25 @@ import com.example.taskmanager.DatePickerModal
 import com.example.taskmanager.data.local.Priority
 import com.example.taskmanager.data.local.Repeat
 import com.example.taskmanager.domain.model.Task
-import com.example.taskmanager.presentation.viewmodel.TaskViewModel
+import com.example.taskmanager.presentation.viewmodel.task.TaskViewModel
 import com.example.taskmanager.TimePickerModal
-import com.example.taskmanager.domain.model.TaskList
 import java.time.LocalTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskAddDetailArea(
-    taskTitle: String,
-    taskDescription: String,
-    taskPriority: Priority,
+fun TaskUpdatingArea(
     onDismiss: () -> Unit,
-    onDismissHalfDialogBox: () -> Unit,
+    task: Task?,
     viewModel: TaskViewModel = hiltViewModel()
 ){
-    var title by remember { mutableStateOf(taskTitle) }
-    var description by remember { mutableStateOf(taskDescription) }
+    var title by remember { mutableStateOf(task!!.title) }
+    var description by remember { mutableStateOf(task!!.description) }
 
-    val isTitleEmpty = remember{ mutableStateOf(title.isEmpty()) }
-    val isDescriptionEmpty = remember{ mutableStateOf(description.isEmpty()) }
+    val isTitleEmpty = remember{ mutableStateOf(true) }
+    val isDescriptionEmpty = remember{ mutableStateOf(true) }
+
+    var isRepeating by remember { mutableStateOf(task!!.isRepeating) }
 
     var textFieldColors by remember {
         mutableStateOf(Color.White)
@@ -76,13 +76,14 @@ fun TaskAddDetailArea(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
 //        Header Text
         Text(
-            text = "Add new task",
+            text = "Update existing task",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
@@ -109,7 +110,7 @@ fun TaskAddDetailArea(
 
         Spacer(modifier = Modifier.height(16.dp ))
 
-//        Description TextField
+//        Descroption TextField
         TextField(
             value = description,
             onValueChange = {
@@ -130,7 +131,7 @@ fun TaskAddDetailArea(
 
 //        Priority TextField
         var expanded by remember { mutableStateOf(false ) }
-        var selectedOption by remember { mutableStateOf(taskPriority) }
+        var selectedOption by remember { mutableStateOf(task!!.priority) }
 
         Row(
             modifier = Modifier
@@ -175,6 +176,11 @@ fun TaskAddDetailArea(
         Spacer(modifier = Modifier.height(16.dp ))
 
 //        Date Picker & Date Display OutlinedTextField
+        LaunchedEffect(Unit) {
+            viewModel.getDateFromTask(task!!)
+            viewModel.getTimeFromTask(task)
+        }
+
         var date: Long? = viewModel.dateMillis
         var time: Int? = viewModel.startTime
 
@@ -254,7 +260,7 @@ fun TaskAddDetailArea(
         Spacer(modifier = Modifier.height(16.dp))
 
         var repeatExpanded by remember { mutableStateOf(false) }
-        var selectedRepeatFrequency by remember { mutableStateOf(Repeat.None) }
+        var selectedRepeatFrequency by remember { mutableStateOf(task!!.repeat) }
         var openCustomRepeatPage by remember { mutableStateOf(false) }
 
         ExposedDropdownMenuBox(
@@ -297,7 +303,6 @@ fun TaskAddDetailArea(
                                     openCustomRepeatPage = true
                                 }
                             }
-
                             repeatExpanded = false
                         }
                     )
@@ -313,12 +318,11 @@ fun TaskAddDetailArea(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var selectedTaskListId by remember { mutableStateOf<Int?> (null) }
+        var selectedTaskListId by remember { mutableStateOf<Int?> (task?.taskListId) }
         var selectedTaskListName by remember { mutableStateOf<String> ("Select Task List") }
         var taskListExpanded by remember { mutableStateOf(false) }
 
         val allTaskList by viewModel.allTasksList.collectAsState()
-
 
         ExposedDropdownMenuBox(
             expanded = taskListExpanded,
@@ -366,40 +370,30 @@ fun TaskAddDetailArea(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = {
-                if(!isTitleEmpty.value && !isDescriptionEmpty.value){
+                if(title.isNotEmpty() && description.isNotEmpty()){
                     title = viewModel.cleanString(title)
                     description = viewModel.cleanString(description)
 
+                    isRepeating = selectedRepeatFrequency != Repeat.None
                     val taskListId = selectedTaskListId
-                    val isRepeating = selectedRepeatFrequency != Repeat.None
 
-                    val task: Task = Task(
-                        title = title,
-                        description = description,
-                        priority = selectedOption,
-                        dueDate = date!!,
-                        dueTime = time!!,
-                        repeat = selectedRepeatFrequency,
-                        isRepeating = isRepeating,
-                        taskListId = taskListId
-                    )
+                    val updatedTask = date?.let { time?.let { it1 -> task?.copy(title = title, description = description, priority = selectedOption, dueDate = it, dueTime = it1, repeat = selectedRepeatFrequency, isRepeating = isRepeating, taskListId = taskListId) } }
 
-                    viewModel.addTask(task)
+                    Log.d("UpdateTask", updatedTask.toString())
+                    if (updatedTask != null) {
+                        viewModel.updateTask(updatedTask)
+                    }
                     onDismiss()
-                    onDismissHalfDialogBox()
-                    Toast.makeText(context, "Task Added Successfully", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Task Updated Successfully", Toast.LENGTH_LONG).show()
                 }
                 else{
                     textFieldColors = Color.Red
                     Toast.makeText(context, "Please enter valid Title", Toast.LENGTH_LONG).show()
                 }
             }) {
-                Text("Add")
+                Text("Update")
             }
-            Button(onClick = {
-                onDismiss()
-                onDismissHalfDialogBox()
-            }) {
+            Button(onClick = onDismiss) {
                 Text("Close")
             }
         }

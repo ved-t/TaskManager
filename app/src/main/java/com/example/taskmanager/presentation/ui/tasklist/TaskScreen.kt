@@ -1,20 +1,18 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager.presentation.ui.tasklist
 
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,15 +26,15 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.StarOutline
+import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,7 +47,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,7 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.taskmanager.OpenDialogBox
 import com.example.taskmanager.domain.model.Task
 import com.example.taskmanager.domain.model.TaskList
-import com.example.taskmanager.presentation.viewmodel.TaskViewModel
+import com.example.taskmanager.presentation.viewmodel.task.TaskViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -108,20 +105,23 @@ fun TaskListHeader(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ){
-                TextButton(onClick = {
-                    showTaskListAddDialog = !showTaskListAddDialog
-                    Toast.makeText(context, "Add new Task List", Toast.LENGTH_SHORT).show()
-                }) {
-                    Text(
-                        text = "New List",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                IconButton(
+                    onClick = {
+                        showTaskListAddDialog = !showTaskListAddDialog
+                        Toast.makeText(context, "Add new Task List", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Icon(
+                        Icons.Rounded.AddCircleOutline,
+                        contentDescription = "Add new task list"
                     )
                 }
             }
 
             if(showTaskListAddDialog){
-                TaskListAddDialogBox(onDismiss = {showTaskListAddDialog = false})
+                TaskListDialogBox(
+                    onDismiss = { showTaskListAddDialog = false },
+                )
             }
         }
 
@@ -160,14 +160,8 @@ private fun TaskListItem(taskList: TaskList, viewModel: TaskViewModel = hiltView
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel = hiltViewModel() ){
-
-//    val allIncompleteTasks by viewModel.allIncompleteTasks.collectAsState()
-//    val allCompleteTasks by viewModel.allCompleteTasks.collectAsState()
-
     val allIncompleteTasks by viewModel.incompleteTasks.collectAsState()
     val allCompleteTasks by viewModel.completeTasks.collectAsState()
-
-//    Log.d("NewTasks", allCompleteTasks2.toString() + allIncompleteTasks2.toString())
 
     val incompleteTasksSize = allIncompleteTasks.size
     val completeTasksSize = allCompleteTasks.size
@@ -180,7 +174,7 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel() ){
     Column(
         modifier = Modifier
     ) {
-        if(taskList!=null){
+        if(taskList != null){
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -192,13 +186,7 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel() ){
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    Icons.Filled.MoreVert,
-                    contentDescription = "More List features",
-                    modifier = Modifier
-                        .clickable {
-                        }
-                )
+                MoreListOptionsMenu(taskList!!)
             }
         }
         if(incompleteTasksSize > 0){
@@ -316,13 +304,21 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel() ){
 @Composable
 fun TaskItem(task: Task) {
     var showSheet by remember { mutableStateOf(false) }
+    val isDarkTheme = isSystemInDarkTheme()
 
     val haptics = LocalHapticFeedback.current
 
     var isLongPressed by remember { mutableStateOf(false) }
 
     val cardColor by animateColorAsState(
-        targetValue = if(isLongPressed) Color.Red else Color.Black,
+        targetValue = if(isLongPressed) Color.Red else {
+            if (isDarkTheme){
+                Color.Black
+            }
+            else{
+                Color.White
+            }
+        } ,
         label = "backGroundColorAnimation"
     )
 
@@ -335,17 +331,16 @@ fun TaskItem(task: Task) {
             .padding(horizontal = 20.dp)
             .combinedClickable(
                 onClick = {
-                    if(!isLongPressed){
+                    if (!isLongPressed) {
                         showSheet = true
-                    }
-                    else{
+                    } else {
                         viewModel.removeTask(task)
                         Toast.makeText(context, "Task Deleted", Toast.LENGTH_LONG).show()
                         isLongPressed = false
                     }
                 },
                 onLongClick = {
-                    isLongPressed  = !isLongPressed
+                    isLongPressed = !isLongPressed
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
             )

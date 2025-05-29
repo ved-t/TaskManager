@@ -1,4 +1,4 @@
-package com.example.taskmanager.presentation.ui
+package com.example.taskmanager.presentation.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
