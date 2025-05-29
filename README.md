@@ -1,0 +1,1 @@
+Android application to track you day - to day tasks. Includes functionality like task priority, repeat tasks daily, weekly, mothly or make your custom repeatability. Group similar tasks togehter by making a task list. Get notifications when a task is due.
