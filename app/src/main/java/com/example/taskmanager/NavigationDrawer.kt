@@ -32,7 +32,7 @@ fun NavigationDrawer(){
     var showHalfDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { MyTopAppBar(scope, drawerState) },
+        topBar = { MyTopAppBar() },
         bottomBar = { MyBottomAppBar()},
         floatingActionButton = {MyFloatingActionButton { showHalfDialog = true } },
         modifier = Modifier.fillMaxSize()
